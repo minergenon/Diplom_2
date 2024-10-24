@@ -23,15 +23,36 @@ class TestUserLogin:
         ("wrong@email.com", "correctpassword"),
         ("correct@email.com", "wrongpassword"),
     ])
-    def test_login_with_invalid_credentials(self, create_user, email, password):
-        correct_email, correct_password, _ = create_user
-        if email == "correct@email.com":
-            email = correct_email
-        if password == "correctpassword":
-            password = correct_password
 
+    def test_login_with_incorrect_email(self, create_user, email, password):
+        correct_email, correct_password, _ = create_user
+        email = "incorrect@email.com"
+        password = correct_password
         response = ApiMethods.login_user(email, password)
+
+        assert ResponseChecker.check_status_code(response, UNAUTHORIZED_CODE) and \
+               ResponseChecker.check_response_field(response, 'message', LOGIN_FAILED['message']), \
+            (f"Неожиданный ответ при попытке авторизации с неверным email. "
+             f"Код ответа: {response.status_code}, тело ответа: {response.json()}")
+
+    def test_login_with_incorrect_password(self, create_user):
+        correct_email, correct_password, _ = create_user
+        email = correct_email
+        password = "incorrectpassword"
+        response = ApiMethods.login_user(email, password)
+
+        assert ResponseChecker.check_status_code(response, UNAUTHORIZED_CODE) and \
+               ResponseChecker.check_response_field(response, 'message', LOGIN_FAILED['message']), \
+            (f"Неожиданный ответ при попытке авторизации с неверным паролем. "
+             f"Код ответа: {response.status_code}, тело ответа: {response.json()}")
+
+    def test_login_with_both_incorrect_credentials(self, create_user):
+        email = "incorrect@email.com"
+        password = "incorrectpassword"
+        response = ApiMethods.login_user(email, password)
+
         assert ResponseChecker.check_status_code(response, UNAUTHORIZED_CODE) and \
                ResponseChecker.check_response_field(response, 'message', LOGIN_FAILED['message']), \
             (f"Неожиданный ответ при попытке авторизации с неверными данными. "
              f"Код ответа: {response.status_code}, тело ответа: {response.json()}")
+
